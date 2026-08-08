@@ -1,0 +1,50 @@
+name: Build Ayanami Ramdisk
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: 'Identificador (ej: iPhone11,8 para XR / iPhone12,5 para 11 Pro Max)'
+        required: true
+        default: 'iPhone11,8'
+      model:
+        description: 'Board (ej: n841ap para XR / d431ap para 11 Pro Max)'
+        required: true
+        default: 'n841ap'
+      cpid:
+        description: 'CPID (0x8020 = A12 / 0x8030 = A13)'
+        required: true
+        default: '0x8020'
+      ios_version:
+        description: 'Version de iOS a construir (ej: 17.0)'
+        required: true
+        default: '17.0'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Descargar el repo
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias
+        run: |
+          brew install blacktop/tap/ipsw
+          pip3 install -r requirements.txt
+
+      - name: Construir bootchain
+        env:
+          CI_PRODUCT: ${{ inputs.product }}
+          CI_MODEL: ${{ inputs.model }}
+          CI_CPID: ${{ inputs.cpid }}
+        run: |
+          chmod +x build.sh boot.sh setup.sh
+          chmod +x tools/darwin/* scripts/*.sh 2>/dev/null || true
+          ./build.sh --version "${{ inputs.ios_version }}" --with-fw
+
+      - name: Subir el bootchain generado
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootchain-${{ inputs.model }}-${{ inputs.ios_version }}
+          path: bootchain/
+          retention-days: 30
