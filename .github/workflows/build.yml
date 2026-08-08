@@ -20,6 +20,9 @@ on:
         required: true
         default: '26.5'
 
+env:
+  HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
+
 jobs:
   build:
     runs-on: macos-14
@@ -30,12 +33,8 @@ jobs:
       - name: Instalar dependencias
         run: |
           sudo softwareupdate --install-rosetta --agree-to-license 2>/dev/null || true
-          brew trust blacktop/tap 2>/dev/null || true
-          brew tap blacktop/tap 2>/dev/null || true
           if brew install blacktop/tap/ipsw 2>/dev/null; then
             echo "ipsw instalado via brew"
-          elif brew install --cask blacktop/tap/ipsw 2>/dev/null; then
-            echo "ipsw instalado via brew cask"
           else
             echo "brew fallo - instalando ipsw desde GitHub releases..."
             IPSW_URL=$(curl -s https://api.github.com/repos/blacktop/ipsw/releases/latest | grep "browser_download_url" | grep "macOS_arm64" | grep -v frida | head -1 | cut -d '"' -f 4)
