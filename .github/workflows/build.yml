@@ -6,19 +6,19 @@ on:
       product:
         description: 'Identificador (ej: iPhone11,8 para XR / iPhone12,5 para 11 Pro Max)'
         required: true
-        default: 'iPhone11,8'
+        default: 'iPhone12,5'
       model:
         description: 'Board (ej: n841ap para XR / d431ap para 11 Pro Max)'
         required: true
-        default: 'n841ap'
+        default: 'd431ap'
       cpid:
         description: 'CPID (0x8020 = A12 / 0x8030 = A13)'
         required: true
-        default: '0x8020'
+        default: '0x8030'
       ios_version:
-        description: 'Version de iOS a construir (ej: 17.0)'
+        description: 'Version de iOS a construir (ej: 26.5)'
         required: true
-        default: '17.0'
+        default: '26.5'
 
 jobs:
   build:
@@ -29,8 +29,22 @@ jobs:
 
       - name: Instalar dependencias
         run: |
-          brew install blacktop/tap/ipsw
-          pip3 install -r requirements.txt
+          sudo softwareupdate --install-rosetta --agree-to-license 2>/dev/null || true
+          brew trust blacktop/tap 2>/dev/null || true
+          brew tap blacktop/tap 2>/dev/null || true
+          if brew install blacktop/tap/ipsw 2>/dev/null; then
+            echo "ipsw instalado via brew"
+          elif brew install --cask blacktop/tap/ipsw 2>/dev/null; then
+            echo "ipsw instalado via brew cask"
+          else
+            echo "brew fallo - instalando ipsw desde GitHub releases..."
+            IPSW_URL=$(curl -s https://api.github.com/repos/blacktop/ipsw/releases/latest | grep "browser_download_url" | grep "macOS_arm64" | grep -v frida | head -1 | cut -d '"' -f 4)
+            curl -L -o /tmp/ipsw.zip "$IPSW_URL"
+            unzip -o /tmp/ipsw.zip -d /tmp/ipsw-bin
+            sudo install -m 755 /tmp/ipsw-bin/ipsw /usr/local/bin/ipsw
+          fi
+          ipsw version || true
+          pip3 install -r requirements.txt || pip3 install --break-system-packages -r requirements.txt
 
       - name: Construir bootchain
         env:
