@@ -129,17 +129,27 @@ for tool in "$IRECOVERY" "$PZB" "$IMG4" "$GTAR" "$TC" "$JQ" curl ipsw python3 hd
     fi
 done
 
-DEVICE_INFO="$("$IRECOVERY" -q)"
-field() {
-    awk -F': ' -v key="$1" '$1 == key { print $2; exit }' <<<"$DEVICE_INFO"
-}
-PRODUCT="$(field PRODUCT)"
-MODEL="$(field MODEL)"
-CPID="$(field CPID)"
-MODE="$(field MODE)"
-PWND="$(field PWND)"
-ECID="$(field ECID)"
-NAME="$(field NAME)"
+if [[ -n "${CI_PRODUCT:-}" && -n "${CI_MODEL:-}" && -n "${CI_CPID:-}" ]]; then
+    PRODUCT="$CI_PRODUCT"
+    MODEL="$CI_MODEL"
+    CPID="$CI_CPID"
+    MODE="DFU"
+    PWND="usbliter8"
+    ECID="ci-build"
+    NAME="ci-build"
+else
+    DEVICE_INFO="$("$IRECOVERY" -q)"
+    field() {
+        awk -F': ' -v key="$1" '$1 == key { print $2; exit }' <<<"$DEVICE_INFO"
+    }
+    PRODUCT="$(field PRODUCT)"
+    MODEL="$(field MODEL)"
+    CPID="$(field CPID)"
+    MODE="$(field MODE)"
+    PWND="$(field PWND)"
+    ECID="$(field ECID)"
+    NAME="$(field NAME)"
+fi
 
 [[ -n "$PRODUCT" && -n "$MODEL" && -n "$CPID" ]] || {
     echo "irecovery did not return PRODUCT, MODEL, and CPID" >&2
