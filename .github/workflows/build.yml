@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       product:
-        description: 'Identificador (ej: iPhone11,8 para XR / iPhone12,5 para 11 Pro Max)'
+        description: 'Identificador (ej: iPhone12,5 para 11 Pro Max)'
         required: true
         default: 'iPhone12,5'
       model:
-        description: 'Board (ej: n841ap para XR / d431ap para 11 Pro Max)'
+        description: 'Board (ej: d431ap para 11 Pro Max)'
         required: true
         default: 'd431ap'
       cpid:
@@ -16,12 +16,9 @@ on:
         required: true
         default: '0x8030'
       ios_version:
-        description: 'Version de iOS a construir (ej: 26.5)'
+        description: 'Version de iOS a construir'
         required: true
         default: '26.5'
-
-env:
-  HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
 
 jobs:
   build:
@@ -30,20 +27,33 @@ jobs:
       - name: Descargar el repo
         uses: actions/checkout@v4
 
-      - name: Instalar dependencias
+      - name: Instalar Rosetta (para binarios Intel del repo)
+        run: sudo softwareupdate --install-rosetta --agree-to-license || true
+
+      - name: Instalar ipsw SIN Homebrew (descarga directa)
         run: |
-          sudo softwareupdate --install-rosetta --agree-to-license 2>/dev/null || true
-          if brew install blacktop/tap/ipsw 2>/dev/null; then
-            echo "ipsw instalado via brew"
-          else
-            echo "brew fallo - instalando ipsw desde GitHub releases..."
-            IPSW_URL=$(curl -s https://api.github.com/repos/blacktop/ipsw/releases/latest | grep "browser_download_url" | grep "macOS_arm64" | grep -v frida | head -1 | cut -d '"' -f 4)
-            curl -L -o /tmp/ipsw.zip "$IPSW_URL"
-            unzip -o /tmp/ipsw.zip -d /tmp/ipsw-bin
-            sudo install -m 755 /tmp/ipsw-bin/ipsw /usr/local/bin/ipsw
+          set -e
+          IPSW_URL=$(curl -s https://api.github.com/repos/blacktop/ipsw/releases/latest | grep "browser_download_url" | grep -iE "macos|darwin" | grep -i arm64 | grep -vi frida | head -1 | cut -d '"' -f 4)
+          if [[ -z "$IPSW_URL" ]]; then
+            echo "ERROR: no se encontro el asset. Assets disponibles:"
+            curl -s https://api.github.com/repos/blacktop/ipsw/releases/latest | grep "browser_download_url"
+            exit 1
           fi
-          ipsw version || true
-          pip3 install -r requirements.txt || pip3 install --break-system-packages -r requirements.txt
+          echo "Descargando: $IPSW_URL"
+          curl -L -o /tmp/ipsw_pkg "$IPSW_URL"
+          mkdir -p /tmp/ipsw-bin
+          if [[ "$IPSW_URL" == *.zip ]]; then
+            unzip -o /tmp/ipsw_pkg -d /tmp/ipsw-bin
+          else
+            tar -xzf /tmp/ipsw_pkg -C /tmp/ipsw-bin
+          fi
+          IPSW_BIN=$(find /tmp/ipsw-bin -name ipsw -type f | head -1)
+          [[ -n "$IPSW_BIN" ]] || { echo "ERROR: binario ipsw no encontrado"; exit 1; }
+          sudo install -m 755 "$IPSW_BIN" /usr/local/bin/ipsw
+          ipsw version
+
+      - name: Instalar dependencias Python
+        run: pip3 install -r requirements.txt || pip3 install --break-system-packages -r requirements.txt
 
       - name: Construir bootchain
         env:
