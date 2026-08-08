@@ -33,10 +33,16 @@ jobs:
       - name: Instalar ipsw SIN Homebrew (descarga directa)
         run: |
           set -e
-          IPSW_URL=$(curl -s https://api.github.com/repos/blacktop/ipsw/releases/latest | grep "browser_download_url" | grep -iE "macos|darwin" | grep -i arm64 | grep -vi frida | head -1 | cut -d '"' -f 4)
+          ASSETS=$(curl -s https://api.github.com/repos/blacktop/ipsw/releases/latest | grep "browser_download_url" | cut -d '"' -f 4)
+          echo "Assets disponibles:"
+          echo "$ASSETS"
+          # Preferir el CLI 'ipsw' para macOS arm64; excluir ipswd (daemon) y frida
+          IPSW_URL=$(echo "$ASSETS" | grep -i "macos" | grep -i "arm64" | grep -vi frida | grep -vi ipswd | grep -iE "/ipsw_" | head -1)
           if [[ -z "$IPSW_URL" ]]; then
-            echo "ERROR: no se encontro el asset. Assets disponibles:"
-            curl -s https://api.github.com/repos/blacktop/ipsw/releases/latest | grep "browser_download_url"
+            IPSW_URL=$(echo "$ASSETS" | grep -i "macos" | grep -i "arm64" | grep -vi frida | grep -vi ipswd | head -1)
+          fi
+          if [[ -z "$IPSW_URL" ]]; then
+            echo "ERROR: no se encontro el asset del CLI ipsw."
             exit 1
           fi
           echo "Descargando: $IPSW_URL"
@@ -47,8 +53,8 @@ jobs:
           else
             tar -xzf /tmp/ipsw_pkg -C /tmp/ipsw-bin
           fi
-          IPSW_BIN=$(find /tmp/ipsw-bin -name ipsw -type f | head -1)
-          [[ -n "$IPSW_BIN" ]] || { echo "ERROR: binario ipsw no encontrado"; exit 1; }
+          IPSW_BIN=$(find /tmp/ipsw-bin -type f -name ipsw | head -1)
+          [[ -n "$IPSW_BIN" ]] || { echo "ERROR: binario ipsw no encontrado tras extraer"; ls -laR /tmp/ipsw-bin; exit 1; }
           sudo install -m 755 "$IPSW_BIN" /usr/local/bin/ipsw
           ipsw version
 
