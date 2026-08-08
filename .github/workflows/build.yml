@@ -66,6 +66,9 @@ jobs:
           /usr/bin/python3 -m pip install --upgrade pip 2>/dev/null || true
           /usr/bin/python3 -m pip install -r requirements.txt || /usr/bin/python3 -m pip install --user -r requirements.txt
           /usr/bin/python3 -c "import pyimg4, capstone; print('pyimg4 OK en /usr/bin/python3')"
+
+      - name: Construir bootchain
+        env:
           CI_PRODUCT: ${{ inputs.product }}
           CI_MODEL: ${{ inputs.model }}
           CI_CPID: ${{ inputs.cpid }}
