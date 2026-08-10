@@ -32,14 +32,16 @@ jobs:
 
       - name: Instalar ipsw
         run: |
-          brew install blacktop/tap/ipsw
+          curl -L -o /tmp/ipsw.tar.gz https://github.com/blacktop/ipsw/releases/download/v3.1.707/ipsw_3.1.707_macOS_arm64.tar.gz
+          mkdir -p /tmp/ipsw-bin
+          tar -xzf /tmp/ipsw.tar.gz -C /tmp/ipsw-bin
+          IPSW_BIN=$(find /tmp/ipsw-bin -type f -name ipsw | head -1)
+          sudo install -m 755 "$IPSW_BIN" /usr/local/bin/ipsw
           ipsw version
-          
+
       - name: Instalar dependencias Python
         run: |
           pip3 install --break-system-packages -r requirements.txt
-          # build.sh usa /usr/bin/python3 porque env.sh pone /usr/bin primero en PATH
-          # El python3 del sistema en macOS no soporta --break-system-packages
           /usr/bin/python3 -m pip install --user -r requirements.txt
           /usr/bin/python3 -c "import pyimg4, capstone; print('pyimg4 OK en /usr/bin/python3')"
 
