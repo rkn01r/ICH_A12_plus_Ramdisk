@@ -60,11 +60,9 @@ jobs:
 
       - name: Instalar dependencias Python
         run: |
-          pip3 install -r requirements.txt || pip3 install --break-system-packages -r requirements.txt
+          pip3 install --break-system-packages -r requirements.txt
           # build.sh usa /usr/bin/python3 porque env.sh pone /usr/bin primero en PATH
-          /usr/bin/python3 -m ensurepip --upgrade 2>/dev/null || true
-          /usr/bin/python3 -m pip install --upgrade pip 2>/dev/null || true
-          /usr/bin/python3 -m pip install -r requirements.txt || /usr/bin/python3 -m pip install --user -r requirements.txt
+          /usr/bin/python3 -m pip install --break-system-packages -r requirements.txt
           /usr/bin/python3 -c "import pyimg4, capstone; print('pyimg4 OK en /usr/bin/python3')"
 
       - name: Construir bootchain
