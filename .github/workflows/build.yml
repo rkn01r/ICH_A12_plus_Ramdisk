@@ -18,8 +18,7 @@ on:
       ios_version:
         description: 'Version de iOS a construir'
         required: true
-        default: '26.5'
-
+        default: '26.3.1'
 jobs:
   build:
     runs-on: macos-14
