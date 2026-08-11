@@ -52,7 +52,7 @@ jobs:
         run: |
           chmod +x build.sh boot.sh setup.sh
           chmod +x tools/darwin/* scripts/*.sh 2>/dev/null || true
-          ./build.sh --version "26.3.1"
+          ./build.sh --version "26.3.1" --kpf-set ios27
 
       - name: Subir el bootchain generado
         uses: actions/upload-artifact@v4
