@@ -26,27 +26,10 @@ jobs:
     steps:
       - name: Mostrar banner ICH
         run: |
-          printf '\033[36m'
-          cat <<'EOF'
- █████╗ ██╗   ██╗ █████╗ ███╗   ██╗ █████╗ ███╗   ███╗██╗
-██╔══██╗╚██╗ ██╔╝██╔══██╗████╗  ██║██╔══██╗████╗ ████║██║
-███████║ ╚████╔╝ ███████║██╔██╗ ██║███████║██╔████╔██║██║
-██╔══██║  ╚██╔╝  ██╔══██║██║╚██╗██║██╔══██║██║╚██╔╝██║██║
-██║  ██║   ██║   ██║  ██║██║ ╚████║██║  ██║██║ ╚═╝ ██║██║
-╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝
-EOF
-          printf '\033[35m'
-          cat <<'EOF'
-                  ██╗  ██╗
-                  ╚██╗██╔╝
-                   ╚███╔╝         ██╗██╗
-                   ██╔██╗         ╚███╔╝
-                  ██╔╝ ██╗ █████╗ ██╔██╗
-                  ╚═╝  ╚═╝ ╚════╝ ╚═╝╚═╝
-EOF
-          printf '\033[0m\n'
           echo "============================================"
-          echo " Rkn01r Rkn01r Rkn01r Rkn01r Rkn01r Rkn01r "
+          echo "  ICH A12/A13 Ramdisk Builder"
+          echo "  by @Official_I_C_H"
+          echo "  Telegram: https://t.me/Official_I_C_H"
           echo "============================================"
           echo ""
           echo "Target: ${{ inputs.product }} (${{ inputs.model }})"
@@ -56,7 +39,7 @@ EOF
       - name: Descargar el repo
         uses: actions/checkout@v4
 
-      - name: Instalar Rosetta (para binarios Intel del repo)
+      - name: Instalar Rosetta
         run: sudo softwareupdate --install-rosetta --agree-to-license || true
 
       - name: Instalar ipsw
@@ -81,18 +64,18 @@ EOF
           brew install libpng 2>/dev/null || true
           sudo mkdir -p /usr/local/opt/libpng/lib 2>/dev/null || true
           if [ -f /usr/local/opt/libpng/lib/libpng16.16.dylib ]; then
-            echo "OK: libpng x86_64 encontrado en /usr/local"
+            echo "OK: libpng x86_64 encontrado"
           elif [ -f /opt/homebrew/opt/libpng/lib/libpng16.16.dylib ]; then
             echo "Creando symlink de ARM a x86_64 path..."
             sudo ln -sf /opt/homebrew/opt/libpng/lib/libpng16.16.dylib /usr/local/opt/libpng/lib/libpng16.16.dylib 2>/dev/null || true
           fi
-          ls -la /usr/local/opt/libpng/lib/libpng16.16.dylib 2>/dev/null && echo "libpng OK" || echo "WARNING: libpng no encontrado - logo puede fallar"
+          ls -la /usr/local/opt/libpng/lib/libpng16.16.dylib 2>/dev/null && echo "libpng OK" || echo "WARNING: libpng no encontrado"
 
       - name: Instalar dependencias Python
         run: |
           pip3 install --break-system-packages -r requirements.txt || true
           /usr/bin/python3 -m pip install --user -r requirements.txt
-          /usr/bin/python3 -c "import pyimg4, capstone; print('pyimg4 OK en /usr/bin/python3')"
+          /usr/bin/python3 -c "import pyimg4, capstone; print('pyimg4 OK')"
 
       - name: Construir bootchain con logo ICH
         env:
@@ -113,7 +96,6 @@ EOF
             echo "El logo ICH se mostrara en pantalla durante el boot"
           else
             echo "WARNING: logo.img4 no encontrado"
-            echo "El boot funcionara pero sin logo en pantalla"
           fi
 
       - name: Subir el bootchain generado
