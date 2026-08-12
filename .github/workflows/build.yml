@@ -1,34 +1,19 @@
 name: Build Ayanami Ramdisk
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
-    inputs:
-      product:
-        description: 'Identificador (ej: iPhone12,5 para 11 Pro Max)'
-        required: true
-        default: 'iPhone12,5'
-      model:
-        description: 'Board (ej: d431ap para 11 Pro Max)'
-        required: true
-        default: 'd431ap'
-      cpid:
-        description: 'CPID (0x8020 = A12 / 0x8030 = A13)'
-        required: true
-        default: '0x8030'
-      ios_version:
-        description: 'Version de iOS a construir'
-        required: true
-        default: '26.3.1'
+
 jobs:
   build:
     runs-on: macos-14
     steps:
-      - name: Descargar el repo
-        uses: actions/checkout@v4
-
-      - name: Instalar Rosetta (para binarios Intel del repo)
+      - uses: actions/checkout@v4
+      
+      - name: Instalar Rosetta
         run: sudo softwareupdate --install-rosetta --agree-to-license || true
-
+      
       - name: Instalar ipsw
         run: |
           curl -L -o /tmp/ipsw.tar.gz https://github.com/blacktop/ipsw/releases/download/v3.1.707/ipsw_3.1.707_macOS_arm64.tar.gz
@@ -37,26 +22,26 @@ jobs:
           IPSW_BIN=$(find /tmp/ipsw-bin -type f -name ipsw | head -1)
           sudo install -m 755 "$IPSW_BIN" /usr/local/bin/ipsw
           ipsw version
-
+      
       - name: Instalar dependencias Python
         run: |
-          pip3 install --break-system-packages -r requirements.txt
+          pip3 install --break-system-packages -r requirements.txt || true
           /usr/bin/python3 -m pip install --user -r requirements.txt
           /usr/bin/python3 -c "import pyimg4, capstone; print('pyimg4 OK en /usr/bin/python3')"
-
+      
       - name: Construir bootchain
         env:
-          CI_PRODUCT: ${{ inputs.product }}
-          CI_MODEL: ${{ inputs.model }}
-          CI_CPID: ${{ inputs.cpid }}
+          CI_PRODUCT: iPhone11,8
+          CI_MODEL: n841ap
+          CI_CPID: 0x8020
         run: |
           chmod +x build.sh boot.sh setup.sh
           chmod +x tools/darwin/* scripts/*.sh 2>/dev/null || true
-          ./build.sh --version "26.3.1" --kpf-set ios27
-
+          ./build.sh --version "18.5" --with-fw
+      
       - name: Subir el bootchain generado
         uses: actions/upload-artifact@v4
         with:
-          name: bootchain-${{ inputs.model }}-${{ inputs.ios_version }}
+          name: bootchain-n841ap-18.5
           path: bootchain/
           retention-days: 30
